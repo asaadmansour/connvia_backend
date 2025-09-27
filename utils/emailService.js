@@ -20,22 +20,15 @@ async function sendVerificationEmail(email, name, verificationToken) {
     // Log the verification URL (for debugging purposes)
     console.log(`Verification URL for ${email}: ${verificationUrl}`);
 
-    // Create a transporter with timeout settings
+    // Explicitly configure the transporter to use port 587 to avoid hosting provider blocks
     const transporter = nodemailer.createTransport({
-      service: "gmail", // or your preferred email service
+      host: "smtp.gmail.com",
+      port: 587,
+      secure: false, // true for 465, false for other ports (STARTTLS)
       auth: {
         user: process.env.EMAIL_USER,
         pass: process.env.EMAIL_PASS,
       },
-      // Add timeout settings to prevent hanging
-      connectionTimeout: 15000, // 15 seconds
-      greetingTimeout: 15000, // 15 seconds
-      socketTimeout: 15000, // 15 seconds
-      // Add retry settings
-      pool: false, // Don't use pool for single emails
-      maxConnections: 1,
-      maxMessages: 1,
-      rateLimit: 5, // max 5 emails per second
     });
 
     // Email options

@@ -198,9 +198,6 @@ async function register(req, res) {
       );
     }
 
-    // Commit transaction
-    await connection.commit();
-
     // Send verification email (blocking - we need to know if it succeeded)
     const emailSent = await sendVerificationEmail(
       email,
@@ -209,6 +206,9 @@ async function register(req, res) {
     );
 
     if (emailSent) {
+      // If email is sent successfully, commit the transaction
+      await connection.commit();
+
       res.status(201).json({
         message:
           "Registration successful! Please check your email to verify your account.",
