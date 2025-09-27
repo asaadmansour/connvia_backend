@@ -201,7 +201,7 @@ async function register(req, res) {
     // Commit transaction
     await connection.commit();
 
-    // Send verification email
+    // Send verification email (blocking - we need to know if it succeeded)
     const emailSent = await sendVerificationEmail(
       email,
       name,
@@ -212,12 +212,16 @@ async function register(req, res) {
       res.status(201).json({
         message:
           "Registration successful! Please check your email to verify your account.",
+        emailSent: true,
+        verificationToken: verificationToken, // Include token for debugging
       });
     } else {
-      // If email sending fails, still create the user but inform them
-      res.status(201).json({
-        message:
-          "Registration successful but verification email could not be sent. Please contact support.",
+      // If email sending fails, rollback the user creation
+      await connection.rollback();
+      res.status(500).json({
+        error:
+          "Failed to send verification email. Please try again or contact support.",
+        emailSent: false,
       });
     }
   } catch (error) {

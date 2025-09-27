@@ -1,6 +1,6 @@
 // utils/emailService.js
-const nodemailer = require('nodemailer');
-require('dotenv').config();
+const nodemailer = require("nodemailer");
+require("dotenv").config();
 
 /**
  * Send verification email to user
@@ -11,26 +11,38 @@ require('dotenv').config();
  */
 async function sendVerificationEmail(email, name, verificationToken) {
   try {
-    // Create verification URL
-    const verificationUrl = `${process.env.FRONTEND_URL}/verify-email/${verificationToken}`;
-    
+    // Create verification URL (ensure no double slashes)
+    const baseUrl =
+      process.env.FRONTEND_URL?.replace(/\/$/, "") ||
+      "https://connvia-production.up.railway.app";
+    const verificationUrl = `${baseUrl}/verify-email/${verificationToken}`;
+
     // Log the verification URL (for debugging purposes)
     console.log(`Verification URL for ${email}: ${verificationUrl}`);
-    
-    // Create a transporter
+
+    // Create a transporter with timeout settings
     const transporter = nodemailer.createTransport({
-      service: 'gmail', // or your preferred email service
+      service: "gmail", // or your preferred email service
       auth: {
         user: process.env.EMAIL_USER,
-        pass: process.env.EMAIL_PASS
-      }
+        pass: process.env.EMAIL_PASS,
+      },
+      // Add timeout settings to prevent hanging
+      connectionTimeout: 15000, // 15 seconds
+      greetingTimeout: 15000, // 15 seconds
+      socketTimeout: 15000, // 15 seconds
+      // Add retry settings
+      pool: false, // Don't use pool for single emails
+      maxConnections: 1,
+      maxMessages: 1,
+      rateLimit: 5, // max 5 emails per second
     });
 
     // Email options
     const mailOptions = {
       from: process.env.EMAIL_USER,
       to: email,
-      subject: 'Verify Your Email Address - Connvia',
+      subject: "Verify Your Email Address - Connvia",
       html: `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
           <h2>Email Verification</h2>
@@ -45,15 +57,15 @@ async function sendVerificationEmail(email, name, verificationToken) {
           <p>If you didn't create an account with us, please ignore this email.</p>
           <p>Best regards,<br>The Connvia Team</p>
         </div>
-      `
+      `,
     };
 
     // Send email
     const info = await transporter.sendMail(mailOptions);
-    console.log('Email sent: ' + info.response);
+    console.log("Email sent: " + info.response);
     return true;
   } catch (error) {
-    console.error('Error sending verification email:', error);
+    console.error("Error sending verification email:", error);
     return false;
   }
 }
