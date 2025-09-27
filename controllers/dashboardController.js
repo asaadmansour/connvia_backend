@@ -37,8 +37,8 @@ exports.getOrganizerDashboardStats = async (req, res) => {
     );
 
     // Extract event IDs
-    const eventIds = eventRows.map(event => event.event_ID);
-    
+    const eventIds = eventRows.map((event) => event.event_ID);
+
     if (eventIds.length === 0) {
       // No events found, return zeros
       return res.status(200).json({
@@ -47,8 +47,8 @@ exports.getOrganizerDashboardStats = async (req, res) => {
           totalRevenue: 0,
           eventsCount: 0,
           ticketsSold: 0,
-          pendingPayments: 0
-        }
+          pendingPayments: 0,
+        },
       });
     }
 
@@ -78,14 +78,14 @@ exports.getOrganizerDashboardStats = async (req, res) => {
       eventsCount: eventRows.length,
       upcomingEvents: upcomingEventsRows[0].upcomingCount,
       ticketsSold: parseInt(statsRows[0].ticketsSold || 0),
-      pendingPayments: parseInt(statsRows[0].pendingPayments || 0)
+      pendingPayments: parseInt(statsRows[0].pendingPayments || 0),
     };
 
     console.log("Dashboard stats:", stats);
 
     return res.status(200).json({
       success: true,
-      data: stats
+      data: stats,
     });
   } catch (error) {
     console.error("Error fetching dashboard stats:", error);

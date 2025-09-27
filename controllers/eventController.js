@@ -1,8 +1,8 @@
 const { pool } = require("../config/db");
-const config = require('../config/config');
+const config = require("../config/config");
 
 // Get base URL from config or use default
-const baseUrl = config.baseUrl || 'http://localhost:3008';
+const baseUrl = config.baseUrl || "http://localhost:3008";
 
 /**
  * Create a new event
@@ -14,20 +14,27 @@ exports.createEvent = async (req, res) => {
     console.log("File uploaded:", req.file ? req.file.filename : "None");
 
     // Extract data from request body with new field names
-    const { 
-      name, 
-      description, 
-      start_date, 
-      end_date, 
+    const {
+      name,
+      description,
+      start_date,
+      end_date,
       start_time,
       end_time,
-      price, 
-      duration, 
-      reservation_ID 
+      price,
+      duration,
+      reservation_ID,
     } = req.body;
 
     // Validate required fields
-    if (!name || !description || !start_date || !start_time || !price || !reservation_ID) {
+    if (
+      !name ||
+      !description ||
+      !start_date ||
+      !start_time ||
+      !price ||
+      !reservation_ID
+    ) {
       return res.status(400).json({
         success: false,
         error: "Missing required fields",
@@ -48,7 +55,18 @@ exports.createEvent = async (req, res) => {
     const [result] = await connection.query(
       `INSERT INTO event (name, description, start_date, end_date, start_time, end_time, price, duration, reservation_ID, image)
        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-      [name, description, start_date, end_date || start_date, start_time, end_time || start_time, price, duration, reservation_ID, imagePath]
+      [
+        name,
+        description,
+        start_date,
+        end_date || start_date,
+        start_time,
+        end_time || start_time,
+        price,
+        duration,
+        reservation_ID,
+        imagePath,
+      ]
     );
 
     return res.status(201).json({
@@ -65,7 +83,7 @@ exports.createEvent = async (req, res) => {
         price,
         duration,
         reservation_ID,
-        image: imagePath
+        image: imagePath,
       },
     });
   } catch (error) {
@@ -92,9 +110,9 @@ exports.getAllEvents = async (req, res) => {
 
     // Get query parameters for filtering
     const { category, search } = req.query;
-    
-    console.log('Fetching events with filters:', { category, search });
-    
+
+    console.log("Fetching events with filters:", { category, search });
+
     // Base query with joins to get category information and organizer details
     let query = `
       SELECT 
@@ -127,51 +145,59 @@ exports.getAllEvents = async (req, res) => {
       LEFT JOIN organizer o ON vr.organizer_ID = o.organizer_ID
       LEFT JOIN user u ON o.user_ID = u.user_ID
       WHERE 1=1`;
-    
+
     const queryParams = [];
-    
+
     // Add category filter if provided
     if (category) {
       query += " AND c.name = ?";
       queryParams.push(category);
     }
-    
+
     // Add search filter if provided
     if (search) {
       query += " AND (e.name LIKE ? OR e.description LIKE ? OR v.name LIKE ?)";
       const searchTerm = `%${search}%`;
       queryParams.push(searchTerm, searchTerm, searchTerm);
     }
-    
+
     // Order by start date, with upcoming events first
     query += " ORDER BY e.start_date ASC";
-    
-    console.log('Executing query:', query);
-    console.log('With params:', queryParams);
-    
+
+    console.log("Executing query:", query);
+    console.log("With params:", queryParams);
+
     // Execute the query
     const [events] = await connection.query(query, queryParams);
-    
+
     console.log(`Found ${events.length} events`);
-    
+
     // Format the events for the frontend
     if (events.length > 0) {
-      console.log('Raw event data from database:', {
+      console.log("Raw event data from database:", {
         event_ID: events[0].event_ID,
         name: events[0].name,
         venue_capacity: events[0].venue_capacity,
         attendees_count: events[0].attendees_count,
-        current_attendees: events[0].current_attendees
+        current_attendees: events[0].current_attendees,
       });
     }
-    
-    const formattedEvents = events.map(event => {
+
+    const formattedEvents = events.map((event) => {
       // Format date range
       const startDate = new Date(event.start_date);
       const endDate = new Date(event.end_date);
-      const formattedStartDate = startDate.toLocaleDateString('en-US', { weekday: 'short', day: 'numeric', month: 'short' });
-      const formattedEndDate = endDate.toLocaleDateString('en-US', { weekday: 'short', day: 'numeric', month: 'short' });
-      
+      const formattedStartDate = startDate.toLocaleDateString("en-US", {
+        weekday: "short",
+        day: "numeric",
+        month: "short",
+      });
+      const formattedEndDate = endDate.toLocaleDateString("en-US", {
+        weekday: "short",
+        day: "numeric",
+        month: "short",
+      });
+
       // Format date string - only show start date and time
       let dateRange;
       if (event.start_date === event.end_date) {
@@ -179,29 +205,36 @@ exports.getAllEvents = async (req, res) => {
       } else {
         dateRange = `${formattedStartDate}, ${event.start_time}`;
       }
-      
+
       // Format price
       const price = event.price === 0 ? "Free" : `${event.price}`;
-      
+
       // Extract coordinates from the location field if available
       let coordinates;
-      
+
       // Try to use venue_location if it contains coordinates
-      if (event.venue_location && typeof event.venue_location === 'string' && 
-          (event.venue_location.includes('lat') || event.venue_location.includes('lng'))) {
+      if (
+        event.venue_location &&
+        typeof event.venue_location === "string" &&
+        (event.venue_location.includes("lat") ||
+          event.venue_location.includes("lng"))
+      ) {
         coordinates = event.venue_location;
-        console.log('Using coordinates from venue_location:', coordinates);
+        console.log("Using coordinates from venue_location:", coordinates);
       } else {
         // Use default coordinates if venue_location doesn't contain coordinates
         const latitude = "30.051894";
         const longitude = "31.285135";
-        coordinates = `{"lat":"${latitude}","lng":"${longitude}"}`;  
-        console.log('Using default New Cairo coordinates:', coordinates);
+        coordinates = `{"lat":"${latitude}","lng":"${longitude}"}`;
+        console.log("Using default New Cairo coordinates:", coordinates);
       }
-      
+
       // Make sure venue_location is a string for consistent handling in the frontend
-      const venue_location = typeof coordinates === 'string' ? coordinates : JSON.stringify(coordinates);
-      
+      const venue_location =
+        typeof coordinates === "string"
+          ? coordinates
+          : JSON.stringify(coordinates);
+
       return {
         id: event.event_ID,
         title: event.name,
@@ -210,46 +243,63 @@ exports.getAllEvents = async (req, res) => {
         subcategory: event.subcategory_name || "General", // Use actual subcategory name if available
         categoryId: event.category_ID, // Include category ID for filtering
         subcategoryId: event.subcategory_id, // Include subcategory ID for filtering
-        image: event.image || "https://images.unsplash.com/photo-1501281668745-f7f57925c3b4?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1470&q=80",
+        image:
+          event.image ||
+          "https://images.unsplash.com/photo-1501281668745-f7f57925c3b4?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1470&q=80",
         dateRange: dateRange,
-        venue: event.venue_name || 'Unknown Venue',
+        venue: event.venue_name || "Unknown Venue",
         location: venue_location,
         price: price,
         attendees: `${event.current_attendees || 0} Attendees`,
         venue_capacity: event.venue_capacity || 0,
         current_attendees: event.current_attendees || 0,
-        organizer_name: event.organizer_company || 'Unknown Organizer',
+        organizer_name: event.organizer_company || "Unknown Organizer",
         start_date: event.start_date,
         end_date: event.end_date,
         start_time: event.start_time,
         end_time: event.end_time,
         coordinates: coordinates, // Add coordinates for map display
-        isFavorite: false // Default value
+        isFavorite: false, // Default value
       };
     });
-    
+
     // Default categories if we can't get them from the database
     const defaultCategories = [
-      { id: 1, name: "Arts & Culture", image: "https://images.unsplash.com/photo-1522202176988-66273c2fd55f?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1471&q=80" },
-      { id: 2, name: "Food & Drink", image: "https://images.unsplash.com/photo-1555529669-e69e7aa0ba9a?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1470&q=80" },
-      { id: 3, name: "Film & Media", image: "https://images.unsplash.com/photo-1501281668745-f7f57925c3b4?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1470&q=80" },
+      {
+        id: 1,
+        name: "Arts & Culture",
+        image:
+          "https://images.unsplash.com/photo-1522202176988-66273c2fd55f?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1471&q=80",
+      },
+      {
+        id: 2,
+        name: "Food & Drink",
+        image:
+          "https://images.unsplash.com/photo-1555529669-e69e7aa0ba9a?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1470&q=80",
+      },
+      {
+        id: 3,
+        name: "Film & Media",
+        image:
+          "https://images.unsplash.com/photo-1501281668745-f7f57925c3b4?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1470&q=80",
+      },
     ];
-    
+
     return res.status(200).json({
       success: true,
       data: {
         events: formattedEvents,
         categories: defaultCategories,
         featuredEvents: formattedEvents.slice(0, 2), // First 2 events as featured
-        recommendedEvents: formattedEvents.slice(2, 4) // Next 2 events as recommended
-      }
+        recommendedEvents: formattedEvents.slice(2, 4), // Next 2 events as recommended
+      },
     });
   } catch (error) {
     console.error("Error fetching events:", error);
     return res.status(500).json({
       success: false,
       error: "Internal server error",
-      details: error.message
+      details: error.message,
     });
   } finally {
     if (connection) {
@@ -266,12 +316,12 @@ exports.getCategories = async (req, res) => {
   try {
     // Get connection from pool
     connection = await pool.getConnection();
-    
+
     // Get all categories
     const [categories] = await connection.query(
       `SELECT category_ID, name, description, img_url FROM category ORDER BY name ASC`
     );
-    
+
     // Get all subcategories with their parent category
     const [subcategories] = await connection.query(
       `SELECT s.subcategory_id, s.category_id, s.name, s.description, s.img_url 
@@ -279,40 +329,45 @@ exports.getCategories = async (req, res) => {
        JOIN category c ON s.category_id = c.category_ID
        ORDER BY s.name ASC`
     );
-    
+
     // Format the response
-    const formattedCategories = categories.map(cat => {
+    const formattedCategories = categories.map((cat) => {
       // Find all subcategories for this category
-      const relatedSubcategories = subcategories.filter(subcat => 
-        subcat.category_id === cat.category_ID
+      const relatedSubcategories = subcategories.filter(
+        (subcat) => subcat.category_id === cat.category_ID
       );
-      
+
       return {
         id: cat.category_ID,
         name: cat.name,
         description: cat.description,
-        image: cat.img_url || "https://images.unsplash.com/photo-1522202176988-66273c2fd55f?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1471&q=80",
-        subcategories: relatedSubcategories.map(subcat => ({
+        image:
+          cat.img_url ||
+          "https://images.unsplash.com/photo-1522202176988-66273c2fd55f?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1471&q=80",
+        subcategories: relatedSubcategories.map((subcat) => ({
           id: subcat.subcategory_id,
           name: subcat.name,
           description: subcat.description,
-          image: subcat.img_url || cat.img_url || "https://images.unsplash.com/photo-1522202176988-66273c2fd55f?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1471&q=80"
-        }))
+          image:
+            subcat.img_url ||
+            cat.img_url ||
+            "https://images.unsplash.com/photo-1522202176988-66273c2fd55f?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1471&q=80",
+        })),
       };
     });
-    
+
     return res.status(200).json({
       success: true,
       data: {
-        categories: formattedCategories
-      }
+        categories: formattedCategories,
+      },
     });
   } catch (error) {
     console.error("Error fetching categories:", error);
     return res.status(500).json({
       success: false,
       error: "Internal server error",
-      details: error.message
+      details: error.message,
     });
   } finally {
     if (connection) {
@@ -368,12 +423,15 @@ exports.getOrganizerEvents = async (req, res) => {
        ORDER BY e.start_date DESC`,
       [organizerId]
     );
-    
-    console.log("Events with ticket sales data:", eventRows.map(event => ({
-      event_ID: event.event_ID,
-      name: event.name,
-      tickets_sold: event.tickets_sold
-    })));
+
+    console.log(
+      "Events with ticket sales data:",
+      eventRows.map((event) => ({
+        event_ID: event.event_ID,
+        name: event.name,
+        tickets_sold: event.tickets_sold,
+      }))
+    );
 
     return res.status(200).json({
       success: true,

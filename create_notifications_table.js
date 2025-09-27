@@ -16,7 +16,7 @@ async function createNotificationsTable() {
         notification_type VARCHAR(50) NOT NULL,
         is_read BOOLEAN DEFAULT FALSE,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        FOREIGN KEY (user_ID) REFERENCES user(user_ID) ON DELETE CASCADE
+        FOREIGN KEY (user_ID) REFERENCES `user`(user_ID) ON DELETE CASCADE
       )
     `;
     

@@ -4,35 +4,35 @@ const { pool } = require("../config/db");
 const createCheckoutSession = async (req, res) => {
   let connection;
   try {
-    const { 
-      reservationId, 
-      eventId, 
-      amount, 
-      venueName, 
-      description, 
+    const {
+      reservationId,
+      eventId,
+      amount,
+      venueName,
+      description,
       quantity = 1,
       success_url,
       cancel_url,
-      attendeeReservationId
+      attendeeReservationId,
     } = req.body;
-    
+
     // Log the request for debugging
-    console.log('Stripe checkout request:', { 
+    console.log("Stripe checkout request:", {
       body: req.body,
       user: req.user,
-      headers: req.headers
+      headers: req.headers,
     });
-    
+
     // Check if user is authenticated
     if (!req.user || !req.user.userId) {
       return res.status(401).json({
         success: false,
-        error: "Unauthorized: User not authenticated"
+        error: "Unauthorized: User not authenticated",
       });
     }
-    
+
     const userId = req.user.userId; // From the auth middleware - using userId from JWT
-    console.log('Stripe checkout - Using userId:', userId);
+    console.log("Stripe checkout - Using userId:", userId);
 
     if (!amount || !venueName) {
       return res.status(400).json({
@@ -52,20 +52,24 @@ const createCheckoutSession = async (req, res) => {
               name: venueName,
               description: description || "Venue Reservation",
             },
-            unit_amount: Math.round(amount * 100 / quantity), // Convert to cents and divide by quantity
+            unit_amount: Math.round((amount * 100) / quantity), // Convert to cents and divide by quantity
           },
           quantity: quantity,
         },
       ],
       mode: "payment",
-      success_url: success_url || (attendeeReservationId
-        ? `${process.env.CLIENT_URL}/dashboards/attendee?payment=success&reservation=${attendeeReservationId}`
-        : eventId 
+      success_url:
+        success_url ||
+        (attendeeReservationId
+          ? `${process.env.CLIENT_URL}/dashboards/attendee?payment=success&reservation=${attendeeReservationId}`
+          : eventId
           ? `${process.env.CLIENT_URL}/payment-success?event=${eventId}&quantity=${quantity}`
           : `${process.env.CLIENT_URL}/dashboards/organizer?payment=success&reservation=${reservationId}`),
-      cancel_url: cancel_url || (attendeeReservationId
-        ? `${process.env.CLIENT_URL}/dashboards/attendee?payment=cancelled&reservation=${attendeeReservationId}`
-        : eventId
+      cancel_url:
+        cancel_url ||
+        (attendeeReservationId
+          ? `${process.env.CLIENT_URL}/dashboards/attendee?payment=cancelled&reservation=${attendeeReservationId}`
+          : eventId
           ? `${process.env.CLIENT_URL}/payment-cancel?event=${eventId}`
           : `${process.env.CLIENT_URL}/dashboards/organizer?payment=cancelled&reservation=${reservationId}`),
       metadata: {
@@ -91,36 +95,36 @@ const createCheckoutSession = async (req, res) => {
 
 // Stripe webhook handler
 const handleWebhook = async (req, res) => {
-  console.log('Webhook received from Stripe!');
+  console.log("Webhook received from Stripe!");
   const signature = req.headers["stripe-signature"];
-  
+
   // Log the headers for debugging
-  console.log('Webhook headers:', req.headers);
-  
+  console.log("Webhook headers:", req.headers);
+
   // Check if we have a signature
   if (!signature) {
-    console.error('No Stripe signature found in webhook request');
-    return res.status(400).send('No Stripe signature found');
+    console.error("No Stripe signature found in webhook request");
+    return res.status(400).send("No Stripe signature found");
   }
-  
+
   // Make sure we have the webhook secret
   if (!process.env.STRIPE_WEBHOOK_SECRET) {
-    console.error('STRIPE_WEBHOOK_SECRET is not set in environment variables');
-    return res.status(500).send('Webhook secret is not configured');
+    console.error("STRIPE_WEBHOOK_SECRET is not set in environment variables");
+    return res.status(500).send("Webhook secret is not configured");
   }
 
   let event;
   try {
     // Log the raw body for debugging
-    console.log('Webhook raw body:', req.body.toString());
-    
+    console.log("Webhook raw body:", req.body.toString());
+
     event = stripe.webhooks.constructEvent(
       req.body,
       signature,
       process.env.STRIPE_WEBHOOK_SECRET
     );
-    
-    console.log('Webhook event constructed successfully:', event.type);
+
+    console.log("Webhook event constructed successfully:", event.type);
   } catch (err) {
     console.error("Webhook signature verification failed:", err.message);
     return res.status(400).send(`Webhook Error: ${err.message}`);
@@ -141,32 +145,40 @@ const handleWebhook = async (req, res) => {
 
         if (attendeeReservationId) {
           // Update attendee reservation status to confirmed - using exact enum value
-          console.log(`Updating reservation ${attendeeReservationId} to 'confirmed' status`);
+          console.log(
+            `Updating reservation ${attendeeReservationId} to 'confirmed' status`
+          );
           await connection.query(
             'UPDATE attendee_reservations SET payment_status = "confirmed" WHERE reservation_ID = ?',
             [attendeeReservationId]
           );
-          
+
           // IMPORTANT: Do not generate tickets here
           // Tickets will be generated by the attendeeController.updateReservationPaymentStatus function
           // when the frontend redirects to the success page
-          console.log(`Reservation ${attendeeReservationId} updated to confirmed status. Tickets will be generated by the attendeeController.`);
-          
+          console.log(
+            `Reservation ${attendeeReservationId} updated to confirmed status. Tickets will be generated by the attendeeController.`
+          );
+
           // Get the event ID and quantity from the reservation
           const [reservationRows] = await connection.query(
-            'SELECT event_ID, quantity FROM attendee_reservations WHERE reservation_ID = ?',
+            "SELECT event_ID, quantity FROM attendee_reservations WHERE reservation_ID = ?",
             [attendeeReservationId]
           );
-          
+
           if (reservationRows.length > 0) {
             const { event_ID, quantity } = reservationRows[0];
-            
+
             // Log the successful reservation
-            console.log(`Created successful reservation for event ${event_ID} with quantity ${quantity}`);
+            console.log(
+              `Created successful reservation for event ${event_ID} with quantity ${quantity}`
+            );
           }
         } else if (reservationId) {
           // Update venue reservation status to confirmed - using exact enum value
-          console.log(`Updating venue reservation ${reservationId} to 'confirmed' status`);
+          console.log(
+            `Updating venue reservation ${reservationId} to 'confirmed' status`
+          );
           await connection.query(
             'UPDATE venue_reservations SET payment_status = "confirmed" WHERE reservation_ID = ?',
             [reservationId]
@@ -176,40 +188,42 @@ const handleWebhook = async (req, res) => {
           // Get the user ID from the customer email
           const customerEmail = session.customer_details.email;
           const [userRows] = await connection.query(
-            'SELECT user_ID FROM user WHERE email = ?',
+            "SELECT user_ID FROM user WHERE email = ?",
             [customerEmail]
           );
-          
+
           if (userRows.length > 0) {
             const userId = userRows[0].user_ID;
-            
+
             // Get or create attendee record
             const [attendeeRows] = await connection.query(
-              'SELECT attendee_ID FROM attendee WHERE user_ID = ?',
+              "SELECT attendee_ID FROM attendee WHERE user_ID = ?",
               [userId]
             );
-            
+
             let attendeeId;
             if (attendeeRows.length === 0) {
               // Create new attendee record
               const [newAttendee] = await connection.query(
-                'INSERT INTO attendee (user_ID, created_at) VALUES (?, NOW())',
+                "INSERT INTO attendee (user_ID, created_at) VALUES (?, NOW())",
                 [userId]
               );
               attendeeId = newAttendee.insertId;
             } else {
               attendeeId = attendeeRows[0].attendee_ID;
             }
-            
+
             // Create a reservation record in the database - using exact enum value
             console.log(`Creating new reservation with 'confirmed' status`);
             await connection.query(
               'INSERT INTO attendee_reservations (attendee_ID, event_ID, quantity, total_price, payment_status, created_at) VALUES (?, ?, ?, ?, "confirmed", NOW())',
               [attendeeId, eventId, quantity, session.amount_total / 100]
             );
-            
+
             // Log the successful reservation
-            console.log(`Created successful reservation for event ${eventId} with quantity ${quantity}`);
+            console.log(
+              `Created successful reservation for event ${eventId} with quantity ${quantity}`
+            );
           }
         }
         break;
@@ -219,7 +233,8 @@ const handleWebhook = async (req, res) => {
         const failedSession = event.data.object;
         const failedReservationId = failedSession.metadata.reservationId;
         const failedEventId = failedSession.metadata.eventId;
-        const failedAttendeeReservationId = failedSession.metadata.attendeeReservationId;
+        const failedAttendeeReservationId =
+          failedSession.metadata.attendeeReservationId;
 
         if (failedAttendeeReservationId) {
           // Update attendee reservation status to cancelled
@@ -238,13 +253,13 @@ const handleWebhook = async (req, res) => {
           // Get the user ID from the customer email
           const customerEmail = failedSession.customer_details.email;
           const [userRows] = await connection.query(
-            'SELECT user_ID FROM user WHERE email = ?',
+            "SELECT user_ID FROM user WHERE email = ?",
             [customerEmail]
           );
-          
+
           if (userRows.length > 0) {
             const userId = userRows[0].user_ID;
-            
+
             // Create a ticket record in the database
             await connection.query(
               `INSERT INTO event_tickets (event_ID, user_ID, purchase_date, payment_status, quantity) 

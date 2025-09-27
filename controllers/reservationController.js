@@ -1,4 +1,4 @@
-  const { pool } = require("../config/db");
+const { pool } = require("../config/db");
 const { authenticateToken } = require("../middleware/authMiddleware");
 
 /**
@@ -331,7 +331,10 @@ exports.getVenueOwnerReservations = async (req, res) => {
     }
 
     const userId = req.user.userId;
-    console.log("DEBUG: Retrieving reservations for venue owner user ID:", userId);
+    console.log(
+      "DEBUG: Retrieving reservations for venue owner user ID:",
+      userId
+    );
 
     // Get a connection from the pool
     connection = await pool.getConnection();
@@ -379,11 +382,11 @@ exports.getVenueOwnerReservations = async (req, res) => {
     }
 
     // Extract venue IDs
-    const venueIds = venuesResult.map(venue => venue.venue_ID);
+    const venueIds = venuesResult.map((venue) => venue.venue_ID);
     console.log("Venue IDs for venue owner:", venueIds);
 
     // Create placeholders for SQL query
-    const placeholders = venueIds.map(() => '?').join(',');
+    const placeholders = venueIds.map(() => "?").join(",");
 
     // Query reservations with the venue IDs
     const query = `
