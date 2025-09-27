@@ -129,8 +129,6 @@ app.post(
   }
 );
 
-// Static files for uploads - moved after API routes but before error handlers
-app.use("/uploads", express.static(path.join(__dirname, "public/uploads")));
 // ✅ TEST DB CONNECTION ROUTE
 app.get("/api/test-db", async (req, res) => {
   const { getConnection } = require("./config/db");
