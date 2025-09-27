@@ -1,0 +1,238 @@
+const { pool } = require('../config/db');
+
+/**
+ * Create a new venue reservation
+ */
+exports.createReservation = async (req, res) => {
+  try {
+    console.log('====== RESERVATION REQUEST RECEIVED ======');
+    console.log('Request method:', req.method);
+    console.log('Request path:', req.path);
+    console.log('Request body:', req.body);
+    console.log('Auth user:', req.user);
+    
+    // Extract data from request body
+    const {
+      venueId,
+      subcategoryId,
+      startDate,
+      endDate,
+      startTime,
+      endTime,
+      attendeesCount,
+      pricingOption,
+      totalCost
+    } = req.body;
+    
+    // Check for required fields
+    if (!venueId || !startDate || !startTime || !endTime || !attendeesCount || !pricingOption || !totalCost) {
+      return res.status(400).json({
+        success: false,
+        error: 'Missing required fields for reservation'
+      });
+    }
+    
+    // Get organizer ID from authenticated user token
+    if (!req.user || !req.user.userId) {
+      console.error('Authentication error: User ID not found in token');
+      return res.status(401).json({
+        success: false,
+        error: 'Authentication failed. Please log in again.'
+      });
+    }
+    
+    const organizerId = req.user.userId;
+    console.log('Organizer ID:', organizerId);
+    
+    // Create a new reservation in the database
+    const query = `
+      INSERT INTO venue_reservations 
+      (organizer_ID, venue_ID, subcategory_id, reservation_date, start_time, end_time, 
+       attendees_count, pricing_option, total_cost, payment_status)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending')
+    `;
+    
+    // For simplicity, we'll just create a single reservation
+    // We can add multi-day reservation support later if needed
+    try {
+      const [result] = await pool.query(query, [
+        organizerId,
+        venueId,
+        subcategoryId || null,
+        startDate,
+        startTime,
+        endTime,
+        attendeesCount,
+        pricingOption,
+        totalCost
+      ]);
+      
+      console.log('Reservation created successfully:', result);
+      
+      return res.status(201).json({
+        success: true,
+        message: 'Reservation created successfully',
+        data: {
+          reservationId: result.insertId,
+          totalCost: totalCost
+        }
+      });
+    } catch (dbError) {
+      console.error('Database error:', dbError);
+      console.error('SQL Error Code:', dbError.code);
+      console.error('SQL Error State:', dbError.sqlState);
+      
+      return res.status(500).json({
+        success: false,
+        error: `Database error: ${dbError.message}`
+      });
+    }
+  } catch (error) {
+    console.error('ERROR DETAILS:');
+    console.error('Error message:', error.message);
+    console.error('Error stack:', error.stack);
+    console.error('Full error:', error);
+    
+    return res.status(500).json({
+      success: false,
+      error: `Server error: ${error.message}`
+    });
+  }
+};
+
+/**
+ * Get reservations for a venue
+ */
+exports.getVenueReservations = async (req, res) => {
+  try {
+    const { venueId } = req.params;
+    
+    if (!venueId) {
+      return res.status(400).json({
+        success: false,
+        error: 'Venue ID is required'
+      });
+    }
+    
+    const query = `
+      SELECT r.reservation_ID, r.organizer_ID, r.venue_ID, r.subcategory_id, 
+             r.reservation_date, r.start_time, r.end_time, r.attendees_count,
+             r.pricing_option, r.total_cost, r.payment_status, r.created_at,
+             u.name as organizer_name, v.name as venue_name,
+             s.name as subcategory_name, c.name as category_name
+      FROM venue_reservations r
+      JOIN user u ON r.organizer_ID = u.user_ID
+      JOIN venues v ON r.venue_ID = v.venue_ID
+      LEFT JOIN subcategories s ON r.subcategory_id = s.subcategory_id
+      LEFT JOIN category c ON s.category_id = c.category_ID
+      WHERE r.venue_ID = ?
+      ORDER BY r.reservation_date DESC, r.start_time ASC
+    `;
+    
+    const [results] = await pool.query(query, [venueId]);
+    
+    return res.status(200).json({
+      success: true,
+      data: {
+        reservations: results
+      }
+    });
+  } catch (error) {
+    console.error('Error fetching venue reservations:', error);
+    return res.status(500).json({
+      success: false,
+      error: `Server error: ${error.message}`
+    });
+  }
+};
+
+/**
+ * Get reservations for an organizer
+ */
+exports.getOrganizerReservations = async (req, res) => {
+  try {
+    // Check if user is authenticated
+    if (!req.user || !req.user.userId) {
+      return res.status(401).json({
+        success: false,
+        error: 'Authentication failed. Please log in again.'
+      });
+    }
+    
+    // Get organizer ID from authenticated user token
+    const organizerId = req.user.userId;
+    
+    const query = `
+      SELECT r.reservation_ID, r.organizer_ID, r.venue_ID, r.subcategory_id, 
+             r.reservation_date, r.start_time, r.end_time, r.attendees_count,
+             r.pricing_option, r.total_cost, r.payment_status, r.created_at,
+             v.name as venue_name, v.images,
+             s.name as subcategory_name, c.name as category_name
+      FROM venue_reservations r
+      JOIN venues v ON r.venue_ID = v.venue_ID
+      LEFT JOIN subcategories s ON r.subcategory_id = s.subcategory_id
+      LEFT JOIN category c ON s.category_id = c.category_ID
+      WHERE r.organizer_ID = ?
+      ORDER BY r.reservation_date DESC, r.start_time ASC
+    `;
+    
+    const [results] = await pool.query(query, [organizerId]);
+    
+    return res.status(200).json({
+      success: true,
+      data: {
+        reservations: results
+      }
+    });
+  } catch (error) {
+    console.error('Error fetching organizer reservations:', error);
+    return res.status(500).json({
+      success: false,
+      error: `Server error: ${error.message}`
+    });
+  }
+};
+
+/**
+ * Update reservation payment status
+ */
+exports.updatePaymentStatus = async (req, res) => {
+  try {
+    const { reservationId } = req.params;
+    const { paymentStatus } = req.body;
+    
+    if (!reservationId || !paymentStatus) {
+      return res.status(400).json({
+        success: false,
+        error: 'Reservation ID and payment status are required'
+      });
+    }
+    
+    // Validate payment status
+    if (!['pending', 'paid'].includes(paymentStatus)) {
+      return res.status(400).json({
+        success: false,
+        error: 'Invalid payment status. Must be either "pending" or "paid"'
+      });
+    }
+    
+    const query = `
+      UPDATE venue_reservations
+      SET payment_status = ?
+      WHERE reservation_ID = ?
+    `;
+    
+    await pool.query(query, [paymentStatus, reservationId]);
+    
+    return res.status(200).json({
+      success: true,
+      message: 'Payment status updated successfully'
+    });
+  } catch (error) {
+    console.error('Error updating payment status:', error);
+    return res.status(500).json({
+      success: false,
+      error: `Server error: ${error.message}`
+    });
+  }
+};

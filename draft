@@ -1,0 +1,57 @@
+const ProtectedRoute = () => {
+  const [authState, setAuthState] = useState({
+    isAuthenticated: null,
+    isLoading: true,
+  });
+  const location = useLocation();
+
+  useEffect(() => {
+    const verifyAuthentication = async () => {
+      try {
+        const isValid = await verifyToken();
+        setAuthState({
+          isAuthenticated: isValid,
+          isLoading: false,
+        });
+      } catch {
+        setAuthState({
+          isAuthenticated: false,
+          isLoading: false,
+        });
+      }
+    };
+
+    verifyAuthentication();
+
+    const verificationInterval = setInterval(verifyAuthentication, 60000);
+
+    const handleVisibility = () => {
+      if (document.visibilityState === "visible") {
+        verifyAuthentication();
+      }
+    };
+
+    document.addEventListener("visibilitychange", handleVisibility);
+
+    return () => {
+      clearInterval(verificationInterval);
+      document.removeEventListener("visibilitychange", handleVisibility);
+    };
+  }, []);
+
+  if (authState.isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="text-center">
+          <div className="spinner"></div>
+          <p>Verifying your access...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // If not authenticated and not already on login page, redirect to login
+  if (!authState.isAuthenticated && location.pathname !== "/login") {
+    return <Navigate to="/login" replace />;
+  }
+};
