@@ -11,6 +11,9 @@ dotenv.config();
 
 const app = express();
 
+// Trust the Railway/Upstream proxy so req.ip and rate limiters work correctly
+app.set("trust proxy", 1);
+
 // Import routes
 const authRoutes = require("./routes/auth");
 const venueRoutes = require("./routes/venue");
