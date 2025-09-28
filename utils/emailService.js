@@ -1,5 +1,6 @@
 // utils/emailService.js
 const nodemailer = require("nodemailer");
+const fetch = require("node-fetch");
 require("dotenv").config();
 
 /**
@@ -17,63 +18,90 @@ async function sendVerificationEmail(email, name, verificationToken) {
       "https://connvia-production.up.railway.app";
     const verificationUrl = `${baseUrl}/verify-email/${verificationToken}`;
 
-    // Log the verification URL (for debugging purposes)
-    console.log(`Verification URL for ${email}: ${verificationUrl}`);
+    // Prefer Brevo HTTP API over SMTP to avoid blocked ports/timeouts on hosts
+    const brevoApiKey = process.env.BREVO_API_KEY;
+    const html = `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+        <h2>Email Verification</h2>
+        <p>Hello ${name},</p>
+        <p>Thank you for registering with Connvia. Please verify your email address by clicking the button below:</p>
+        <div style="text-align: center; margin: 30px 0;">
+          <a href="${verificationUrl}" style="background-color: #4CAF50; color: white; padding: 12px 20px; text-decoration: none; border-radius: 4px; font-weight: bold;">Verify Email</a>
+        </div>
+        <p>If the button doesn't work, you can also click on the link below or copy it to your browser:</p>
+        <p><a href="${verificationUrl}">${verificationUrl}</a></p>
+        <p>This link will expire in 24 hours.</p>
+        <p>If you didn't create an account with us, please ignore this email.</p>
+        <p>Best regards,<br>The Connvia Team</p>
+      </div>
+    `;
 
-    // Explicitly configure the transporter to use port 587 to avoid hosting provider blocks
+    // If API key present, use HTTPS API with 8s timeout
+    if (brevoApiKey) {
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 8000);
+      try {
+        const resp = await fetch("https://api.brevo.com/v3/smtp/email", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "api-key": brevoApiKey,
+          },
+          body: JSON.stringify({
+            sender: { email: process.env.EMAIL_FROM || process.env.EMAIL_USER },
+            to: [{ email }],
+            subject: "Verify Your Email Address - Connvia",
+            htmlContent: html,
+          }),
+          signal: controller.signal,
+        });
+        clearTimeout(timeout);
+        if (!resp.ok) {
+          const text = await resp.text().catch(() => "");
+          console.error("Brevo API error status:", resp.status, text?.slice(0, 200));
+          // Fall through to SMTP fallback
+        } else {
+          return true;
+        }
+      } catch (e) {
+        console.error("Brevo API request failed:", String(e).slice(0, 200));
+        // Fall through to SMTP fallback
+      }
+    }
+
+    // Fallback to SMTP (STARTTLS 587) with 8s timeout
     const transporter = nodemailer.createTransport({
       host: process.env.EMAIL_HOST || "smtp-relay.brevo.com",
-      port: process.env.EMAIL_PORT || 587,
-      secure: false, // Brevo uses STARTTLS on port 587
+      port: Number(process.env.EMAIL_PORT) || 587,
+      secure: false,
       auth: {
-        user: process.env.EMAIL_USER, // e.g., 9808cc001@smtp-brevo.com
-        pass: process.env.EMAIL_PASS, // your master password
+        user: process.env.EMAIL_USER,
+        pass: process.env.EMAIL_PASS,
       },
+      connectionTimeout: 8000,
+      greetingTimeout: 8000,
+      socketTimeout: 8000,
     });
 
-    // Email options
     const mailOptions = {
-      from: process.env.EMAIL_USER,
+      from: process.env.EMAIL_FROM || process.env.EMAIL_USER,
       to: email,
       subject: "Verify Your Email Address - Connvia",
-      html: `
-        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-          <h2>Email Verification</h2>
-          <p>Hello ${name},</p>
-          <p>Thank you for registering with Connvia. Please verify your email address by clicking the button below:</p>
-          <div style="text-align: center; margin: 30px 0;">
-            <a href="${verificationUrl}" style="background-color: #4CAF50; color: white; padding: 12px 20px; text-decoration: none; border-radius: 4px; font-weight: bold;">Verify Email</a>
-          </div>
-          <p>If the button doesn't work, you can also click on the link below or copy it to your browser:</p>
-          <p><a href="${verificationUrl}">${verificationUrl}</a></p>
-          <p>This link will expire in 24 hours.</p>
-          <p>If you didn't create an account with us, please ignore this email.</p>
-          <p>Best regards,<br>The Connvia Team</p>
-        </div>
-      `,
+      html,
     };
 
-    // Send email with a manual timeout to prevent hanging
-    console.log("Attempting to send email...");
-    const sendMailPromise = new Promise((resolve, reject) => {
-      const timeout = setTimeout(() => {
-        reject(new Error("Email sending timed out after 20 seconds"));
-      }, 20000); // 20-second timeout
-
-      transporter.sendMail(mailOptions, (error, info) => {
-        clearTimeout(timeout);
-        if (error) {
-          return reject(error);
-        }
-        resolve(info);
+    await new Promise((resolve, reject) => {
+      const to = setTimeout(() => reject(new Error("SMTP send timeout (8s)")), 8000);
+      transporter.sendMail(mailOptions, (err) => {
+        clearTimeout(to);
+        if (err) return reject(err);
+        resolve();
       });
     });
 
-    const info = await sendMailPromise;
-    console.log("Email sent successfully: " + info.response);
     return true;
   } catch (error) {
-    console.error("Error sending verification email:", error);
+    console.error("sendVerificationEmail failed:", String(error).slice(0, 200));
     return false;
   }
 }
