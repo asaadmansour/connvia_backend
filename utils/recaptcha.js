@@ -9,10 +9,8 @@ async function verifyRecaptcha(token) {
         console.log('Development mode: reCAPTCHA verification bypassed');
         return true;
     }
-    
+
     try {
-        const controller = new AbortController();
-        const timeout = setTimeout(() => controller.abort(), 6000);
         const response = await fetch(
             "https://www.google.com/recaptcha/api/siteverify",
             {
@@ -21,15 +19,13 @@ async function verifyRecaptcha(token) {
                     "Content-Type": "application/x-www-form-urlencoded",
                 },
                 body: `secret=${process.env.RECAPTCHA_SECRET_KEY}&response=${token}`,
-                signal: controller.signal,
             }
         );
-        clearTimeout(timeout);
 
         const data = await response.json();
-        return !!data.success;
+        return data.success;
     } catch (error) {
-        console.error("reCAPTCHA verification error:", String(error).slice(0, 200));
+        console.error("reCAPTCHA verification error:", error);
         return false;
     }
 }
