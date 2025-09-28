@@ -22,12 +22,12 @@ async function sendVerificationEmail(email, name, verificationToken) {
 
     // Explicitly configure the transporter to use port 587 to avoid hosting provider blocks
     const transporter = nodemailer.createTransport({
-      host: "smtp.gmail.com",
-      port: 587,
-      secure: false, // true for 465, false for other ports (STARTTLS)
+      host: process.env.EMAIL_HOST || "smtp-relay.brevo.com",
+      port: process.env.EMAIL_PORT || 587,
+      secure: false, // Brevo uses STARTTLS on port 587
       auth: {
-        user: process.env.EMAIL_USER,
-        pass: process.env.EMAIL_PASS,
+        user: process.env.EMAIL_USER, // e.g., 9808cc001@smtp-brevo.com
+        pass: process.env.EMAIL_PASS, // your master password
       },
     });
 
@@ -53,9 +53,24 @@ async function sendVerificationEmail(email, name, verificationToken) {
       `,
     };
 
-    // Send email
-    const info = await transporter.sendMail(mailOptions);
-    console.log("Email sent: " + info.response);
+    // Send email with a manual timeout to prevent hanging
+    console.log("Attempting to send email...");
+    const sendMailPromise = new Promise((resolve, reject) => {
+      const timeout = setTimeout(() => {
+        reject(new Error("Email sending timed out after 20 seconds"));
+      }, 20000); // 20-second timeout
+
+      transporter.sendMail(mailOptions, (error, info) => {
+        clearTimeout(timeout);
+        if (error) {
+          return reject(error);
+        }
+        resolve(info);
+      });
+    });
+
+    const info = await sendMailPromise;
+    console.log("Email sent successfully: " + info.response);
     return true;
   } catch (error) {
     console.error("Error sending verification email:", error);
