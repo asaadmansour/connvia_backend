@@ -1,10 +1,8 @@
 // controllers/authController.js
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
-const crypto = require("crypto");
 const { verifyRecaptcha } = require("../utils/recaptcha");
 const { getConnection } = require("../config/db"); // Import getConnection
-const { sendVerificationEmail } = require("../utils/emailService");
 require("dotenv").config();
 
 // Track login attempts by email (consider using a more robust store like Redis)
@@ -95,11 +93,6 @@ async function register(req, res) {
     const saltRounds = 10;
     const hashedPassword = await bcrypt.hash(password, saltRounds);
 
-    // Generate verification token
-    const verificationToken = crypto.randomBytes(32).toString("hex");
-    const tokenExpiry = new Date();
-    tokenExpiry.setHours(tokenExpiry.getHours() + 24); // Token valid for 24 hours
-
     // Map user type from frontend to database enum values
     let dbUserType;
     switch (userType) {
@@ -117,7 +110,7 @@ async function register(req, res) {
         dbUserType = "regular";
         break;
       case "venueOwner":
-        dbUserType = "venue"; // Venue owners are their own type
+        dbUserType = "venue";
         break;
       default:
         dbUserType = "regular";
@@ -126,20 +119,17 @@ async function register(req, res) {
     // Begin transaction
     await connection.beginTransaction();
 
-    // Insert user
+    // Insert user — auto-verified, no email verification required
     const [result] = await connection.query(
-      `INSERT INTO \`user\` (name, email, password, phone, user_type, verification_token, token_expiry, is_verified, 
+      `INSERT INTO \`user\` (name, email, password, phone, user_type, is_verified,
         city, gender, date_of_birth, date_joined, status) 
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), 'Active')`,
+       VALUES (?, ?, ?, ?, ?, 1, ?, ?, ?, NOW(), 'Active')`,
       [
         name,
         email,
         hashedPassword,
         phoneNumber || null,
         dbUserType,
-        verificationToken,
-        tokenExpiry,
-        false,
         city || null,
         gender || null,
         dateOfBirth || null,
@@ -198,32 +188,12 @@ async function register(req, res) {
       );
     }
 
-    // Commit the transaction first — user is saved regardless of email
+    // Commit the transaction — registration complete
     await connection.commit();
 
-    // Attempt to send verification email (non-blocking for registration success)
-    const emailSent = await sendVerificationEmail(
-      email,
-      name,
-      verificationToken
-    );
-
-    if (emailSent) {
-      res.status(201).json({
-        message:
-          "Registration successful! Please check your email to verify your account.",
-        emailSent: true,
-        verificationToken: verificationToken,
-      });
-    } else {
-      // User is registered but email failed — still a success, just warn them
-      res.status(201).json({
-        message:
-          "Registration successful! However, we couldn't send the verification email. Please use the 'Resend Verification' option or contact support.",
-        emailSent: false,
-        verificationToken: verificationToken,
-      });
-    }
+    res.status(201).json({
+      message: "Registration successful! You can now log in.",
+    });
   } catch (error) {
     if (connection) {
       await connection.rollback();
@@ -463,14 +433,7 @@ async function login(req, res) {
       });
     }
 
-    // Check if email is verified
-    if (!user.is_verified) {
-      /* log removed */
-      return res.status(401).json({
-        error: "Please verify your email before logging in",
-        emailNotVerified: true,
-      });
-    }
+    // Email verification removed — all registered users can log in directly
 
     const token = jwt.sign(
       {
