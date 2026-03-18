@@ -62,7 +62,7 @@ router.post('/upload-logo', logoUpload.single('logo'), (req, res) => {
       path: `/uploads/logos/${req.file.filename}`
     });
   } catch (error) {
-    console.error('Error uploading logo:', error);
+    /* log removed */
     res.status(500).json({
       success: false,
       error: 'Failed to upload logo'

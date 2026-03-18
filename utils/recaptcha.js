@@ -6,7 +6,7 @@ async function verifyRecaptcha(token) {
     // For development/testing purposes only
     const isDevelopmentMode = process.env.NODE_ENV === 'development';
     if (isDevelopmentMode) {
-        console.log('Development mode: reCAPTCHA verification bypassed');
+        /* log removed */
         return true;
     }
 
@@ -25,7 +25,7 @@ async function verifyRecaptcha(token) {
         const data = await response.json();
         return data.success;
     } catch (error) {
-        console.error("reCAPTCHA verification error:", error);
+        /* log removed */
         return false;
     }
 }

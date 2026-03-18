@@ -228,7 +228,7 @@ async function register(req, res) {
     if (connection) {
       await connection.rollback();
     }
-    console.error("Registration error:", error);
+    /* log removed */
     res.status(500).json({ error: "Internal server error" });
   } finally {
     if (connection) {
@@ -239,17 +239,17 @@ async function register(req, res) {
 
 async function verifyEmail(req, res) {
   const { token } = req.params;
-  console.log("Verification attempt with token:", token);
+  /* log removed */
 
   if (!token) {
-    console.log("No token provided");
+    /* log removed */
     return res.status(400).json({ error: "Verification token is required" });
   }
 
   let connection;
   try {
     connection = await getConnection();
-    console.log("Database connection established for verification");
+    /* log removed */
 
     // First check if the token exists at all (regardless of verification status)
     const [allUsers] = await connection.query(
@@ -257,10 +257,10 @@ async function verifyEmail(req, res) {
       [token]
     );
 
-    console.log("Users found with this token:", allUsers.length);
+    /* log removed */
 
     if (allUsers.length === 0) {
-      console.log("No users found with token:", token);
+      /* log removed */
 
       // Check if this email was already verified (token might have been used already)
       // We can't check by token since it would have been nullified after verification
@@ -273,7 +273,7 @@ async function verifyEmail(req, res) {
 
     // If user is already verified
     if (allUsers[0].is_verified === 1) {
-      console.log("User already verified:", allUsers[0].email);
+      /* log removed */
       return res
         .status(200)
         .json({ message: "Email already verified. You can now log in." });
@@ -285,10 +285,10 @@ async function verifyEmail(req, res) {
       [token]
     );
 
-    console.log("Unverified users found with this token:", users.length);
+    /* log removed */
 
     if (users.length === 0) {
-      console.log("No unverified users found with token:", token);
+      /* log removed */
       // This means the token exists but user is already verified
       return res
         .status(200)
@@ -296,14 +296,14 @@ async function verifyEmail(req, res) {
     }
 
     const user = users[0];
-    console.log("User found for verification:", user.email);
+    /* log removed */
 
     // Check if token has expired
     const tokenExpiry = new Date(user.token_expiry);
-    console.log("Token expiry:", tokenExpiry, "Current time:", new Date());
+    /* log removed */
 
     if (tokenExpiry < new Date()) {
-      console.log("Token expired for user:", user.email);
+      /* log removed */
       return res.status(400).json({ error: "Verification token has expired" });
     }
 
@@ -312,13 +312,13 @@ async function verifyEmail(req, res) {
       "UPDATE `user` SET is_verified = 1, verification_token = NULL, token_expiry = NULL WHERE user_ID = ?",
       [user.user_ID]
     );
-    console.log("User verified successfully:", user.email);
+    /* log removed */
 
     res
       .status(200)
       .json({ message: "Email verified successfully! You can now log in." });
   } catch (error) {
-    console.error("Email verification error:", error);
+    /* log removed */
     res.status(500).json({ error: "Internal server error" });
   } finally {
     if (connection) {
@@ -387,7 +387,7 @@ async function resendVerification(req, res) {
       });
     }
   } catch (error) {
-    console.error("Resend verification error:", error);
+    /* log removed */
     res.status(500).json({ error: "Internal server error" });
   } finally {
     if (connection) {
@@ -398,18 +398,18 @@ async function resendVerification(req, res) {
 
 async function login(req, res) {
   const { email, password, recaptchaToken } = req.body;
-  console.log("Login attempt for:", email);
+  /* log removed */
 
   // Validate required fields
   if (!email || !password) {
-    console.log("Missing email or password");
+    /* log removed */
     return res.status(400).json({ error: "Email and password are required" });
   }
 
   // Skip reCAPTCHA in development mode
   const isDevelopment = process.env.NODE_ENV === "development";
   if (!isDevelopment && !recaptchaToken) {
-    console.log("Missing recaptcha token");
+    /* log removed */
     return res.status(400).json({
       error: "Please complete the reCAPTCHA verification",
       requireRecaptcha: true,
@@ -420,7 +420,7 @@ async function login(req, res) {
   let recaptchaValid = true;
   if (!isDevelopment && recaptchaToken) {
     recaptchaValid = await verifyRecaptcha(recaptchaToken);
-    console.log("reCAPTCHA validation result:", recaptchaValid);
+    /* log removed */
   }
 
   if (!isDevelopment && !recaptchaValid) {
@@ -433,16 +433,16 @@ async function login(req, res) {
   let connection;
   try {
     connection = await getConnection();
-    console.log("Database connection established");
+    /* log removed */
 
     const [results] = await connection.query(
       "SELECT * FROM `user` WHERE email = ?",
       [email]
     );
-    console.log("User query results count:", results.length);
+    /* log removed */
 
     if (results.length === 0) {
-      console.log("No user found with email:", email);
+      /* log removed */
       return res.status(401).json({
         error: "Invalid email or password",
         requireRecaptcha: !isDevelopment,
@@ -450,13 +450,13 @@ async function login(req, res) {
     }
 
     const user = results[0];
-    console.log("User found:", user.user_ID, user.email);
+    /* log removed */
 
     const passwordMatch = await bcrypt.compare(password, user.password);
-    console.log("Password match result:", passwordMatch);
+    /* log removed */
 
     if (!passwordMatch) {
-      console.log("Password doesn't match for user:", email);
+      /* log removed */
       return res.status(401).json({
         error: "Invalid email or password",
         requireRecaptcha: !isDevelopment,
@@ -465,7 +465,7 @@ async function login(req, res) {
 
     // Check if email is verified
     if (!user.is_verified) {
-      console.log("User email not verified:", email);
+      /* log removed */
       return res.status(401).json({
         error: "Please verify your email before logging in",
         emailNotVerified: true,
@@ -482,7 +482,7 @@ async function login(req, res) {
       process.env.JWT_SECRET,
       { expiresIn: "24h" }
     );
-    console.log("JWT token generated for user:", email);
+    /* log removed */
 
     res.status(200).json({
       message: "Login successful",
@@ -495,7 +495,7 @@ async function login(req, res) {
       },
     });
   } catch (error) {
-    console.error("Login error:", error);
+    /* log removed */
     res.status(500).json({ error: "Internal server error" });
   } finally {
     if (connection) {

@@ -15,12 +15,10 @@ async function cleanupPendingReservations() {
     const [result] = await connection.query(query);
 
     if (result.affectedRows > 0) {
-      console.log(
-        `Cleaned up ${result.affectedRows} expired pending reservations`
-      );
+      /* log removed */
     }
   } catch (error) {
-    console.error("Error cleaning up pending reservations:", error);
+    /* log removed */
   } finally {
     if (connection) connection.release();
   }

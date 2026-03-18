@@ -7,7 +7,7 @@ exports.getAllGovernorates = async (req, res) => {
   let connection;
   try {
     connection = await getConnection();
-    console.log('Fetching all governorates...');
+    /* log removed */
     
     // This is a simplified version - in a real implementation, you would fetch from a database
     const governorates = [
@@ -30,7 +30,7 @@ exports.getAllGovernorates = async (req, res) => {
       }
     });
   } catch (error) {
-    console.error('Error in getAllGovernorates:', error);
+    /* log removed */
     return res.status(500).json({ success: false, error: 'Server error' });
   } finally {
     if (connection) connection.release();
@@ -50,7 +50,7 @@ exports.getDistrictsByGovernorate = async (req, res) => {
       return res.status(400).json({ success: false, error: 'Governorate ID is required' });
     }
     
-    console.log(`Fetching districts for governorate ID: ${governorateId}`);
+    /* log removed */
     
     // This is a simplified version - in a real implementation, you would fetch from a database
     const districtsByGovernorate = {
@@ -127,7 +127,7 @@ exports.getDistrictsByGovernorate = async (req, res) => {
       }
     });
   } catch (error) {
-    console.error('Error in getDistrictsByGovernorate:', error);
+    /* log removed */
     return res.status(500).json({ success: false, error: 'Server error' });
   } finally {
     if (connection) connection.release();
@@ -141,7 +141,7 @@ exports.getAllLocations = async (req, res) => {
   let connection;
   try {
     connection = await getConnection();
-    console.log('Fetching all locations...');
+    /* log removed */
     
     // This is a simplified version - in a real implementation, you would fetch from a database
     const locations = [
@@ -211,7 +211,7 @@ exports.getAllLocations = async (req, res) => {
       }
     });
   } catch (error) {
-    console.error('Error in getAllLocations:', error);
+    /* log removed */
     return res.status(500).json({ success: false, error: 'Server error' });
   } finally {
     if (connection) connection.release();

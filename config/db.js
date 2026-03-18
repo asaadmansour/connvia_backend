@@ -16,7 +16,7 @@ async function getConnection() {
   try {
     return await pool.getConnection();
   } catch (error) {
-    console.error("Database connection error:", error);
+    /* log removed */
     throw new Error("Failed to connect to the database."); // Re-throw for handling
   }
 }

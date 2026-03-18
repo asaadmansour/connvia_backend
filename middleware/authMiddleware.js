@@ -10,7 +10,7 @@ const authenticateToken = (req, res, next) => {
         // Extract token from Authorization header
         const authHeader = req.headers.authorization;
         if (!authHeader) {
-            console.log('Auth middleware - No authorization header');
+            /* log removed */
             return res.status(401).json({ 
                 success: false,
                 error: "Unauthorized: No authorization header provided" 
@@ -20,7 +20,7 @@ const authenticateToken = (req, res, next) => {
         // Check if the header format is correct
         const parts = authHeader.split(' ');
         if (parts.length !== 2 || parts[0] !== 'Bearer') {
-            console.log('Auth middleware - Invalid authorization format');
+            /* log removed */
             return res.status(401).json({ 
                 success: false,
                 error: "Unauthorized: Invalid authorization format" 
@@ -29,7 +29,7 @@ const authenticateToken = (req, res, next) => {
 
         const token = parts[1];
         if (!token) {
-            console.log('Auth middleware - No token provided');
+            /* log removed */
             return res.status(401).json({ 
                 success: false,
                 error: "Unauthorized: No token provided" 
@@ -38,11 +38,11 @@ const authenticateToken = (req, res, next) => {
 
         // Verify the token
         const decoded = jwt.verify(token, process.env.JWT_SECRET);
-        console.log('Auth middleware - Decoded token:', decoded);
+        /* log removed */
         
         // Make sure we have the userId in the decoded token
         if (!decoded.userId) {
-            console.log('Auth middleware - Token missing userId');
+            /* log removed */
             return res.status(403).json({ 
                 success: false,
                 error: "Forbidden: Invalid token format" 
@@ -55,7 +55,7 @@ const authenticateToken = (req, res, next) => {
         // Continue to the next middleware or route handler
         next();
     } catch (err) {
-        console.log('Auth middleware - Token verification error:', err.message);
+        /* log removed */
         return res.status(403).json({ 
             success: false,
             error: "Forbidden: Invalid token" 
@@ -70,7 +70,7 @@ const verifyToken = (token) => {
     try {
         return jwt.verify(token, process.env.JWT_SECRET);
     } catch (err) {
-        console.error('Token verification error:', err.message);
+        /* log removed */
         return null;
     }
 };

@@ -7,19 +7,14 @@ const { authenticateToken } = require("../middleware/authMiddleware");
 exports.createReservation = async (req, res) => {
   let connection;
   try {
-    console.log("====== RESERVATION REQUEST RECEIVED ======");
-    console.log("Request method:", req.method);
-    console.log("Request path:", req.path);
-    console.log("Request body:", JSON.stringify(req.body, null, 2));
-    console.log("Auth user:", JSON.stringify(req.user, null, 2));
-    console.log("User ID from token:", req.user?.userId);
-    console.log(
-      "Auth headers:",
-      req.headers.authorization
-        ? "Bearer token present"
-        : "No authorization header"
-    );
-    console.log("Creating new venue reservation with data:", req.body);
+    /* log removed */
+    /* log removed */
+    /* log removed */
+    /* log removed */
+    /* log removed */
+    /* log removed */
+    /* log removed */
+    /* log removed */
 
     // Extract data from request body with fallbacks for field name variations
     const venueId =
@@ -73,7 +68,7 @@ exports.createReservation = async (req, res) => {
 
     // Get user ID from authenticated user token
     if (!req.user || !req.user.userId) {
-      console.error("Authentication error: User ID not found in token");
+      /* log removed */
       return res.status(401).json({
         success: false,
         error: "Authentication failed. Please log in again.",
@@ -96,7 +91,7 @@ exports.createReservation = async (req, res) => {
 
     if (!organizerRows || organizerRows.length === 0) {
       await connection.rollback();
-      console.error("No organizer record found for user ID:", userId);
+      /* log removed */
       return res.status(400).json({
         success: false,
         error: "User is not registered as an organizer",
@@ -104,7 +99,7 @@ exports.createReservation = async (req, res) => {
     }
 
     const organizerId = organizerRows[0].organizer_ID;
-    console.log("Found organizer_ID:", organizerId, "for user_ID:", userId);
+    /* log removed */
 
     // Create a new reservation in the database
     const query = `
@@ -145,21 +140,18 @@ exports.createReservation = async (req, res) => {
       await connection.rollback();
     }
 
-    console.error("====== RESERVATION ERROR DETAILS ======");
-    console.error("Error message:", error.message);
-    console.error("Error stack:", error.stack);
+    /* log removed */
+    /* log removed */
+    /* log removed */
 
     // Additional SQL-specific error details if available
-    if (error.code) console.error("SQL error code:", error.code);
-    if (error.sqlState) console.error("SQL error state:", error.sqlState);
-    if (error.sql) console.error("SQL query:", error.sql);
+    if (error.code) /* log removed */
+    if (error.sqlState) /* log removed */
+    if (error.sql) /* log removed */
 
-    console.error("Request body at time of error:", req.body);
-    console.error(
-      "User info at time of error:",
-      req.user || "No user info available"
-    );
-    console.error("Full error:", error);
+    /* log removed */
+    /* log removed */
+    /* log removed */
 
     return res.status(500).json({
       success: false,
@@ -219,7 +211,7 @@ exports.getVenueReservations = async (req, res) => {
       },
     });
   } catch (error) {
-    console.error("Error fetching venue reservations:", error);
+    /* log removed */
     return res.status(500).json({
       success: false,
       error: "Server error occurred while fetching reservations",
@@ -242,7 +234,7 @@ exports.getOrganizerReservations = async (req, res) => {
     }
 
     const userId = req.user.userId;
-    console.log("DEBUG: Retrieving reservations for user ID:", userId);
+    /* log removed */
 
     // Get a connection from the pool
     connection = await pool.getConnection();
@@ -254,7 +246,7 @@ exports.getOrganizerReservations = async (req, res) => {
     );
 
     if (!organizerRows || organizerRows.length === 0) {
-      console.error("No organizer record found for user ID:", userId);
+      /* log removed */
       return res.status(200).json({
         success: true,
         data: {
@@ -265,12 +257,7 @@ exports.getOrganizerReservations = async (req, res) => {
     }
 
     const organizerId = organizerRows[0].organizer_ID;
-    console.log(
-      "DEBUG: Found organizer_ID:",
-      organizerId,
-      "for user_ID:",
-      userId
-    );
+    /* log removed */
 
     // Now query reservations with the correct organizer_ID
     const query = `
@@ -287,13 +274,11 @@ exports.getOrganizerReservations = async (req, res) => {
       ORDER BY r.reservation_date DESC, r.start_time ASC
     `;
 
-    console.log("DEBUG: Running query with organizerId:", organizerId);
+    /* log removed */
 
     const [results] = await pool.query(query, [organizerId]);
 
-    console.log(
-      `DEBUG: Found ${results.length} reservations for organizer ${organizerId}`
-    );
+    /* log removed */
 
     return res.status(200).json({
       success: true,
@@ -302,7 +287,7 @@ exports.getOrganizerReservations = async (req, res) => {
       },
     });
   } catch (error) {
-    console.error("Error fetching organizer reservations:", error);
+    /* log removed */
     return res.status(500).json({
       success: false,
       error: "Server error occurred while fetching reservations",
@@ -331,10 +316,7 @@ exports.getVenueOwnerReservations = async (req, res) => {
     }
 
     const userId = req.user.userId;
-    console.log(
-      "DEBUG: Retrieving reservations for venue owner user ID:",
-      userId
-    );
+    /* log removed */
 
     // Get a connection from the pool
     connection = await pool.getConnection();
@@ -346,7 +328,7 @@ exports.getVenueOwnerReservations = async (req, res) => {
     );
 
     if (!venueOwnerRows || venueOwnerRows.length === 0) {
-      console.error("No venue owner record found for user ID:", userId);
+      /* log removed */
       return res.status(200).json({
         success: true,
         data: {
@@ -357,12 +339,7 @@ exports.getVenueOwnerReservations = async (req, res) => {
     }
 
     const venueOwnerId = venueOwnerRows[0].venue_owner_ID;
-    console.log(
-      "DEBUG: Found venue_owner_ID:",
-      venueOwnerId,
-      "for user_ID:",
-      userId
-    );
+    /* log removed */
 
     // Get all venues owned by this venue owner
     const [venuesResult] = await connection.query(
@@ -371,7 +348,7 @@ exports.getVenueOwnerReservations = async (req, res) => {
     );
 
     if (!venuesResult || venuesResult.length === 0) {
-      console.log("No venues found for venue owner ID:", venueOwnerId);
+      /* log removed */
       return res.status(200).json({
         success: true,
         data: {
@@ -383,7 +360,7 @@ exports.getVenueOwnerReservations = async (req, res) => {
 
     // Extract venue IDs
     const venueIds = venuesResult.map((venue) => venue.venue_ID);
-    console.log("Venue IDs for venue owner:", venueIds);
+    /* log removed */
 
     // Create placeholders for SQL query
     const placeholders = venueIds.map(() => "?").join(",");
@@ -406,13 +383,11 @@ exports.getVenueOwnerReservations = async (req, res) => {
       ORDER BY r.reservation_date DESC, r.start_time ASC
     `;
 
-    console.log("DEBUG: Running query with venue IDs:", venueIds);
+    /* log removed */
 
     const [results] = await connection.query(query, venueIds);
 
-    console.log(
-      `DEBUG: Found ${results.length} reservations for venue owner ${venueOwnerId}`
-    );
+    /* log removed */
 
     return res.status(200).json({
       success: true,
@@ -421,7 +396,7 @@ exports.getVenueOwnerReservations = async (req, res) => {
       },
     });
   } catch (error) {
-    console.error("Error fetching venue owner reservations:", error);
+    /* log removed */
     return res.status(500).json({
       success: false,
       error: "Server error occurred while fetching reservations",
@@ -472,7 +447,7 @@ exports.updatePaymentStatus = async (req, res) => {
       message: "Payment status updated successfully",
     });
   } catch (error) {
-    console.error("Error updating payment status:", error);
+    /* log removed */
     return res.status(500).json({
       success: false,
       error: "Server error occurred while updating payment status",

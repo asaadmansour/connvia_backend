@@ -38,7 +38,7 @@ exports.getUserNotifications = async (req, res) => {
       }
     });
   } catch (error) {
-    console.error('Error fetching user notifications:', error);
+    /* log removed */
     return res.status(500).json({
       success: false,
       error: 'Failed to fetch notifications'
@@ -89,7 +89,7 @@ exports.markNotificationAsRead = async (req, res) => {
       message: 'Notification marked as read'
     });
   } catch (error) {
-    console.error('Error marking notification as read:', error);
+    /* log removed */
     return res.status(500).json({
       success: false,
       error: 'Failed to update notification'
@@ -126,7 +126,7 @@ exports.markAllNotificationsAsRead = async (req, res) => {
       count: result.affectedRows
     });
   } catch (error) {
-    console.error('Error marking all notifications as read:', error);
+    /* log removed */
     return res.status(500).json({
       success: false,
       error: 'Failed to update notifications'
@@ -161,7 +161,7 @@ exports.createNotification = async (userId, message, notificationType, relatedId
       notificationId: result.insertId
     };
   } catch (error) {
-    console.error('Error creating notification:', error);
+    /* log removed */
     return {
       success: false,
       error: 'Failed to create notification'
@@ -201,7 +201,7 @@ exports.createReservationNotification = async (req, res) => {
       notificationId: result.notificationId
     });
   } catch (error) {
-    console.error('Error creating reservation notification:', error);
+    /* log removed */
     return res.status(500).json({
       success: false,
       error: 'Failed to create notification'

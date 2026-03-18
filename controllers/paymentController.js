@@ -58,7 +58,7 @@ exports.createPaymentIntent = async (req, res) => {
       reservation: reservationData,
     });
   } catch (error) {
-    console.error("Payment intent creation error:", error);
+    /* log removed */
     return res.status(500).json({
       success: false,
       error: "Failed to create payment intent",
@@ -107,7 +107,7 @@ exports.confirmPayment = async (req, res) => {
       });
     }
   } catch (error) {
-    console.error("Payment confirmation error:", error);
+    /* log removed */
     return res.status(500).json({
       success: false,
       error: "Failed to confirm payment",
@@ -163,16 +163,16 @@ exports.createCheckoutSession = async (req, res) => {
         },
       ],
       success_url: `${
-        process.env.FRONTEND_URL || "http://localhost:5173"
+        process.env.FRONTEND_URL?.replace(/\/$/, "") || "http://localhost:5173"
       }/dashboards/organizer?payment=success&reservation=${reservationId}`,
       cancel_url: `${
-        process.env.FRONTEND_URL || "http://localhost:5173"
+        process.env.FRONTEND_URL?.replace(/\/$/, "") || "http://localhost:5173"
       }/dashboards/organizer?payment=cancelled&reservation=${reservationId}`,
       metadata: { reservationId: reservationId },
     });
     return res.status(200).json({ success: true, url: session.url });
   } catch (error) {
-    console.error("Checkout session creation error:", error);
+    /* log removed */
     return res
       .status(500)
       .json({ success: false, error: "Failed to create checkout session" });

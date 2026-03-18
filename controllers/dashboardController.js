@@ -7,7 +7,7 @@ exports.getOrganizerDashboardStats = async (req, res) => {
   let connection;
   try {
     const userId = req.user.userId;
-    console.log("Fetching dashboard stats for user ID:", userId);
+    /* log removed */
 
     connection = await pool.getConnection();
 
@@ -25,7 +25,7 @@ exports.getOrganizerDashboardStats = async (req, res) => {
     }
 
     const organizerId = organizerRows[0].organizer_ID;
-    console.log("Organizer ID:", organizerId);
+    /* log removed */
 
     // Get all events created by this organizer
     const [eventRows] = await connection.query(
@@ -81,14 +81,14 @@ exports.getOrganizerDashboardStats = async (req, res) => {
       pendingPayments: parseInt(statsRows[0].pendingPayments || 0),
     };
 
-    console.log("Dashboard stats:", stats);
+    /* log removed */
 
     return res.status(200).json({
       success: true,
       data: stats,
     });
   } catch (error) {
-    console.error("Error fetching dashboard stats:", error);
+    /* log removed */
     return res.status(500).json({
       success: false,
       error: `Server error: ${error.message}`,

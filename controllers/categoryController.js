@@ -5,11 +5,11 @@ const { pool } = require('../config/db');
  */
 exports.getAllCategories = async (req, res) => {
   try {
-    console.log('Fetching all categories...');
+    /* log removed */
     const query = 'SELECT category_ID, name, age_range, description, img_url FROM category';
     
     const [results] = await pool.query(query);
-    console.log('Categories fetched:', results);
+    /* log removed */
     
     return res.status(200).json({
       success: true,
@@ -18,7 +18,7 @@ exports.getAllCategories = async (req, res) => {
       }
     });
   } catch (error) {
-    console.error('Error in getAllCategories:', error);
+    /* log removed */
     return res.status(500).json({ success: false, error: 'Server error' });
   }
 };
@@ -34,11 +34,11 @@ exports.getSubcategoriesByCategoryId = async (req, res) => {
       return res.status(400).json({ success: false, error: 'Category ID is required' });
     }
     
-    console.log(`Fetching subcategories for category ID: ${categoryId}`);
+    /* log removed */
     const query = 'SELECT subcategory_id, category_id, name, description, img_url, age_range FROM subcategories WHERE category_id = ?';
     
     const [results] = await pool.query(query, [categoryId]);
-    console.log('Subcategories fetched:', results);
+    /* log removed */
     
     return res.status(200).json({
       success: true,
@@ -47,7 +47,7 @@ exports.getSubcategoriesByCategoryId = async (req, res) => {
       }
     });
   } catch (error) {
-    console.error('Error in getSubcategoriesByCategoryId:', error);
+    /* log removed */
     return res.status(500).json({ success: false, error: 'Server error' });
   }
 };
@@ -57,7 +57,7 @@ exports.getSubcategoriesByCategoryId = async (req, res) => {
  */
 exports.getAllSubcategories = async (req, res) => {
   try {
-    console.log('Fetching all subcategories...');
+    /* log removed */
     const query = `
       SELECT s.subcategory_id, s.category_id, s.name, s.description, s.img_url, s.age_range, 
              c.name as category_name
@@ -66,7 +66,7 @@ exports.getAllSubcategories = async (req, res) => {
     `;
     
     const [results] = await pool.query(query);
-    console.log('All subcategories fetched:', results);
+    /* log removed */
     
     return res.status(200).json({
       success: true,
@@ -75,7 +75,7 @@ exports.getAllSubcategories = async (req, res) => {
       }
     });
   } catch (error) {
-    console.error('Error in getAllSubcategories:', error);
+    /* log removed */
     return res.status(500).json({ success: false, error: 'Server error' });
   }
 };

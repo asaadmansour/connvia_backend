@@ -10,8 +10,8 @@ const baseUrl = config.baseUrl || "http://localhost:3008";
 exports.createEvent = async (req, res) => {
   let connection;
   try {
-    console.log("Creating new event with data:", req.body);
-    console.log("File uploaded:", req.file ? req.file.filename : "None");
+    /* log removed */
+    /* log removed */
 
     // Extract data from request body with new field names
     const {
@@ -45,7 +45,7 @@ exports.createEvent = async (req, res) => {
     let imagePath = null;
     if (req.file) {
       imagePath = `${baseUrl}/uploads/events/${req.file.filename}`;
-      console.log("Image path set to:", imagePath);
+      /* log removed */
     }
 
     // Get connection from pool
@@ -87,7 +87,7 @@ exports.createEvent = async (req, res) => {
       },
     });
   } catch (error) {
-    console.error("Error creating event:", error);
+    /* log removed */
     return res.status(500).json({
       success: false,
       error: `Server error: ${error.message}`,
@@ -111,7 +111,7 @@ exports.getAllEvents = async (req, res) => {
     // Get query parameters for filtering
     const { category, search } = req.query;
 
-    console.log("Fetching events with filters:", { category, search });
+    /* log removed */
 
     // Base query with joins to get category information and organizer details
     let query = `
@@ -164,23 +164,17 @@ exports.getAllEvents = async (req, res) => {
     // Order by start date, with upcoming events first
     query += " ORDER BY e.start_date ASC";
 
-    console.log("Executing query:", query);
-    console.log("With params:", queryParams);
+    /* log removed */
+    /* log removed */
 
     // Execute the query
     const [events] = await connection.query(query, queryParams);
 
-    console.log(`Found ${events.length} events`);
+    /* log removed */
 
     // Format the events for the frontend
     if (events.length > 0) {
-      console.log("Raw event data from database:", {
-        event_ID: events[0].event_ID,
-        name: events[0].name,
-        venue_capacity: events[0].venue_capacity,
-        attendees_count: events[0].attendees_count,
-        current_attendees: events[0].current_attendees,
-      });
+      /* log removed */
     }
 
     const formattedEvents = events.map((event) => {
@@ -220,13 +214,13 @@ exports.getAllEvents = async (req, res) => {
           event.venue_location.includes("lng"))
       ) {
         coordinates = event.venue_location;
-        console.log("Using coordinates from venue_location:", coordinates);
+        /* log removed */
       } else {
         // Use default coordinates if venue_location doesn't contain coordinates
         const latitude = "30.051894";
         const longitude = "31.285135";
         coordinates = `{"lat":"${latitude}","lng":"${longitude}"}`;
-        console.log("Using default New Cairo coordinates:", coordinates);
+        /* log removed */
       }
 
       // Make sure venue_location is a string for consistent handling in the frontend
@@ -295,7 +289,7 @@ exports.getAllEvents = async (req, res) => {
       },
     });
   } catch (error) {
-    console.error("Error fetching events:", error);
+    /* log removed */
     return res.status(500).json({
       success: false,
       error: "Internal server error",
@@ -363,7 +357,7 @@ exports.getCategories = async (req, res) => {
       },
     });
   } catch (error) {
-    console.error("Error fetching categories:", error);
+    /* log removed */
     return res.status(500).json({
       success: false,
       error: "Internal server error",
@@ -383,7 +377,7 @@ exports.getOrganizerEvents = async (req, res) => {
   let connection;
   try {
     const userId = req.user.userId;
-    console.log("Fetching events for user ID:", userId);
+    /* log removed */
 
     connection = await pool.getConnection();
 
@@ -401,7 +395,7 @@ exports.getOrganizerEvents = async (req, res) => {
     }
 
     const organizerId = organizerRows[0].organizer_ID;
-    console.log("Organizer ID:", organizerId);
+    /* log removed */
 
     // Get all events created by this organizer with ticket sales data
     const [eventRows] = await connection.query(
@@ -424,21 +418,14 @@ exports.getOrganizerEvents = async (req, res) => {
       [organizerId]
     );
 
-    console.log(
-      "Events with ticket sales data:",
-      eventRows.map((event) => ({
-        event_ID: event.event_ID,
-        name: event.name,
-        tickets_sold: event.tickets_sold,
-      }))
-    );
+    /* log removed */
 
     return res.status(200).json({
       success: true,
       data: eventRows,
     });
   } catch (error) {
-    console.error("Error fetching organizer events:", error);
+    /* log removed */
     return res.status(500).json({
       success: false,
       error: `Server error: ${error.message}`,

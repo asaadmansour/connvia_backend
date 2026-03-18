@@ -8,12 +8,7 @@ const createAttendeeReservation = async (req, res) => {
     const { eventId, quantity, totalPrice } = req.body;
     const userId = req.user.userId; // From the auth middleware - using userId from JWT
 
-    console.log("Creating reservation with:", {
-      userId,
-      eventId,
-      quantity,
-      totalPrice,
-    });
+    /* log removed */
 
     if (!eventId || !quantity || !totalPrice) {
       return res.status(400).json({
@@ -33,7 +28,7 @@ const createAttendeeReservation = async (req, res) => {
     // If no attendee record exists, create one
     let attendeeId;
     if (attendeeRows.length === 0) {
-      console.log("Creating new attendee record for user:", userId);
+      /* log removed */
       // User doesn't have an attendee record yet, create one
       const [newAttendee] = await connection.query(
         "INSERT INTO attendee (user_ID, created_at) VALUES (?, NOW())",
@@ -44,7 +39,7 @@ const createAttendeeReservation = async (req, res) => {
       attendeeId = attendeeRows[0].attendee_ID;
     }
 
-    console.log("Using attendeeId:", attendeeId);
+    /* log removed */
 
     // Create a new reservation with pending payment status
     const [result] = await connection.query(
@@ -69,16 +64,8 @@ const createAttendeeReservation = async (req, res) => {
     });
   } catch (error) {
     // Enhanced error logging
-    console.error("Error creating attendee reservation:", error);
-    console.error("Create reservation error details:", {
-      message: error.message,
-      stack: error.stack,
-      name: error.name,
-      code: error.code,
-      userId: req.user.id,
-      eventId: req.body.eventId,
-      quantity: req.body.quantity,
-    });
+    /* log removed */
+    /* log removed */
 
     res.status(500).json({
       success: false,
@@ -144,9 +131,7 @@ const updateReservationPaymentStatus = async (req, res) => {
     }
 
     // Log the payment status update
-    console.log(
-      `Payment for reservation ${reservationId} marked as ${paymentStatus}`
-    );
+    /* log removed */
 
     // Get the reservation details for logging
     const [reservationRows] = await connection.query(
@@ -156,9 +141,7 @@ const updateReservationPaymentStatus = async (req, res) => {
 
     if (reservationRows.length > 0) {
       const { event_ID, quantity } = reservationRows[0];
-      console.log(
-        `Updated reservation for event ${event_ID} with quantity ${quantity}`
-      );
+      /* log removed */
 
       // Generate tickets if payment status is confirmed
       if (paymentStatus === "confirmed") {
@@ -180,9 +163,7 @@ const updateReservationPaymentStatus = async (req, res) => {
             // Double-check to make absolutely sure we're not generating duplicate tickets
             // Only generate tickets if none exist for this reservation
             if (ticketCount === 0) {
-              console.log(
-                `No existing tickets found for reservation ${reservationId}. Generating ${quantity} tickets...`
-              );
+              /* log removed */
 
               // Get event details for QR code content
               const [eventRows] = await connection.query(
@@ -222,33 +203,25 @@ const updateReservationPaymentStatus = async (req, res) => {
                   );
                 }
 
-                console.log(
-                  `Generated ${quantity} tickets for reservation ${reservationId}`
-                );
+                /* log removed */
               }
 
               // If we get here without errors, commit the transaction
               await connection.commit();
-              console.log(
-                `Transaction committed successfully for reservation ${reservationId}`
-              );
+              /* log removed */
             } else {
               // No need for the transaction if we're not generating tickets
               await connection.rollback();
-              console.log(
-                `Tickets already exist for reservation ${reservationId}. Found ${ticketCount} tickets, skipping generation.`
-              );
+              /* log removed */
             }
           } catch (transactionError) {
             // If there's an error during ticket generation, rollback the transaction
             await connection.rollback();
-            console.error(
-              `Transaction error during ticket generation: ${transactionError.message}`
-            );
+            /* log removed */
             throw transactionError; // Re-throw to be caught by the outer try-catch
           }
         } catch (error) {
-          console.error("Error generating tickets:", error);
+          /* log removed */
           // Continue with the response even if ticket generation fails
           // We don't want to fail the payment status update if ticket generation fails
         }
@@ -265,16 +238,8 @@ const updateReservationPaymentStatus = async (req, res) => {
     });
   } catch (error) {
     // Enhanced error logging
-    console.error("Error updating attendee reservation payment status:", error);
-    console.error("Update payment status error details:", {
-      message: error.message,
-      stack: error.stack,
-      name: error.name,
-      code: error.code,
-      userId: req.user.id,
-      reservationId: req.params.reservationId,
-      paymentStatus: req.body.paymentStatus,
-    });
+    /* log removed */
+    /* log removed */
 
     res.status(500).json({
       success: false,
@@ -326,14 +291,8 @@ const getAttendeeReservations = async (req, res) => {
     });
   } catch (error) {
     // Enhanced error logging
-    console.error("Error getting attendee reservations:", error);
-    console.error("Get reservations error details:", {
-      message: error.message,
-      stack: error.stack,
-      name: error.name,
-      code: error.code,
-      userId: req.user.id,
-    });
+    /* log removed */
+    /* log removed */
 
     res.status(500).json({
       success: false,
@@ -389,7 +348,7 @@ const getAttendeeTickets = async (req, res) => {
       count: tickets.length,
     });
   } catch (error) {
-    console.error("Error fetching attendee tickets:", error);
+    /* log removed */
     res.status(500).json({
       success: false,
       message: "Failed to fetch tickets",

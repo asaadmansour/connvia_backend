@@ -6,27 +6,23 @@ const config = require("../config/config");
 async function createVenue(req, res) {
   let connection;
   try {
-    console.log("[createVenue] Starting venue creation process");
+    /* log removed */
 
     // Get user info from the authenticated token
     const userId = req.user.userId;
     const userType = req.user.userType;
 
-    console.log(`[createVenue] User ID: ${userId}, User Type: ${userType}`);
+    /* log removed */
 
     // Check if user is a venue owner
-    console.log(
-      `[createVenue] Checking if user is a venue owner (userType: ${userType})`
-    );
+    /* log removed */
     if (userType !== "venue") {
-      console.log(
-        `[createVenue] User is not a venue owner, userType: ${userType}`
-      );
+      /* log removed */
       return res
         .status(403)
         .json({ error: "Only venue owners can create venues" });
     }
-    console.log(`[createVenue] User is a venue owner, proceeding`);
+    /* log removed */
 
     // Get venue data from request body
     const {
@@ -66,51 +62,29 @@ async function createVenue(req, res) {
     connection = await getConnection();
 
     // First, get the venue_owner_ID for this user
-    console.log(
-      `[createVenue] Querying venue_owner table for user_ID: ${userId}`
-    );
+    /* log removed */
     const [venueOwnerResult] = await connection.query(
       "SELECT venue_owner_ID FROM venue_owner WHERE user_ID = ?",
       [userId]
     );
 
-    console.log(`[createVenue] venue_owner query result:`, venueOwnerResult);
+    /* log removed */
 
     if (venueOwnerResult.length === 0) {
-      console.log(
-        `[createVenue] Venue owner profile not found for user_ID: ${userId}`
-      );
+      /* log removed */
       return res.status(404).json({ error: "Venue owner profile not found" });
     }
 
-    console.log(
-      `[createVenue] Found venue_owner_ID: ${venueOwnerResult[0].venue_owner_ID}`
-    );
+    /* log removed */
 
     const venue_owner_ID = venueOwnerResult[0].venue_owner_ID;
-    console.log(`[createVenue] Using venue_owner_ID: ${venue_owner_ID}`);
+    /* log removed */
 
     // Insert venue into database, including venue_owner_ID
-    console.log(`[createVenue] Preparing to insert venue into database`);
-    console.log(`[createVenue] Insert query parameters:`, {
-      name,
-      location: locationStr,
-      capacity,
-      facilities: facilitiesStr,
-      available_dates,
-      userId,
-      venue_owner_ID,
-      description,
-      category,
-      rules: rulesStr,
-      contact_email,
-      pricing_type,
-      cost_hourly,
-      cost_daily,
-      working_hours: workingHoursStr,
-    });
+    /* log removed */
+    /* log removed */
 
-    console.log(`[createVenue] Executing INSERT query for venue table`);
+    /* log removed */
     const [results] = await connection.query(
       `INSERT INTO venue (
         name, 
@@ -153,81 +127,75 @@ async function createVenue(req, res) {
     );
 
     // Handle image uploads separately if exists
-    console.log(`[createVenue] Checking for image uploads`);
+    /* log removed */
     if (req.files && req.files.images) {
-      console.log(`[createVenue] Images found in request:`, req.files.images);
+      /* log removed */
 
       // Store full URLs instead of just paths
       const baseUrl = config.baseUrl || `${req.protocol}://${req.get("host")}`;
-      console.log(`[createVenue] Base URL for images: ${baseUrl}`);
+      /* log removed */
 
       try {
         const images = Array.isArray(req.files.images)
           ? req.files.images
               .map((file) => {
-                console.log(
-                  `[createVenue] Processing image file: ${file.originalname}, size: ${file.size}`
-                );
+                /* log removed */
                 return `${baseUrl}/uploads/venues/${file.filename}`;
               })
               .join(",")
           : `${baseUrl}/uploads/venues/${req.files.images.filename}`;
 
-        console.log(`[createVenue] Final images string: ${images}`);
+        /* log removed */
 
-        console.log(`[createVenue] Updating venue with images`);
+        /* log removed */
         await connection.query(
           "UPDATE venue SET images = ? WHERE venue_ID = ?",
           [images, results.insertId]
         );
-        console.log(`[createVenue] Venue updated with images successfully`);
+        /* log removed */
       } catch (imgError) {
-        console.error(`[createVenue] Error processing images:`, imgError);
+        /* log removed */
         // Continue with venue creation even if image processing fails
       }
     }
 
     // Get the created venue
-    console.log(
-      `[createVenue] Retrieving the created venue with ID: ${results.insertId}`
-    );
+    /* log removed */
     const [venueResult] = await connection.query(
       "SELECT * FROM venue WHERE venue_ID = ?",
       [results.insertId]
     );
 
-    console.log(`[createVenue] Venue creation completed successfully`);
+    /* log removed */
     res.status(201).json({
       message: "Venue created successfully",
       venue: venueResult[0],
     });
   } catch (error) {
-    console.error("[createVenue] ERROR creating venue:", error);
+    /* log removed */
 
     // Log more detailed error information
     if (error.sql) {
-      console.error("[createVenue] SQL query that failed:", error.sql);
+      /* log removed */
     }
 
     if (error.code) {
-      console.error("[createVenue] Error code:", error.code);
+      /* log removed */
     }
 
     // Log the full error stack trace
-    console.error("[createVenue] Error stack trace:", error.stack);
+    /* log removed */
 
     // Check for specific error types
     if (
       error.code === "ER_NO_REFERENCED_ROW_2" ||
       error.code === "ER_NO_REFERENCED_ROW"
     ) {
-      console.error(
-        "[createVenue] Foreign key constraint error - likely an issue with venue_owner_ID"
-      );
+      /* log removed */
     } else if (error.code === "ER_BAD_NULL_ERROR") {
-      console.error("[createVenue] NULL value provided for a NOT NULL column");
+      /* log removed */
     } else if (error.code === "ER_DUP_ENTRY") {
-      console.error("[createVenue] Duplicate entry for a unique key");
+      /* log removed */
     }
 
     // Return more detailed error information to help debugging
@@ -264,7 +232,7 @@ async function getUserVenues(req, res) {
       venues,
     });
   } catch (error) {
-    console.error("Error getting user venues:", error);
+    /* log removed */
     res
       .status(500)
       .json({ error: "Internal server error", details: error.message });
@@ -303,7 +271,7 @@ async function getVenueById(req, res) {
       venue: venues[0],
     });
   } catch (error) {
-    console.error("Error getting venue:", error);
+    /* log removed */
     res
       .status(500)
       .json({ error: "Internal server error", details: error.message });
@@ -326,7 +294,7 @@ async function getAvailableVenues(req, res) {
       "SELECT * FROM venue WHERE is_available = 1"
     );
 
-    console.log("Raw venues from database:", venues);
+    /* log removed */
 
     // Step 2: Lookup venue owners one by one to ensure correct data
     const formattedVenues = [];
@@ -339,7 +307,7 @@ async function getAvailableVenues(req, res) {
           [venue.venue_owner_ID]
         );
 
-        console.log(`Found owner for venue ${venue.venue_ID}:`, ownerResult);
+        /* log removed */
 
         const ownerName =
           ownerResult.length > 0 ? ownerResult[0].name : "Unknown Owner";
@@ -377,14 +345,14 @@ async function getAvailableVenues(req, res) {
       }
     }
 
-    console.log("Final venues with direct owner lookup:", formattedVenues);
+    /* log removed */
 
     // Return the properly formatted venues
     res.status(200).json({
       venues: formattedVenues,
     });
   } catch (error) {
-    console.error("Error getting available venues:", error);
+    /* log removed */
     res
       .status(500)
       .json({ error: "Internal server error", details: error.message });
@@ -572,7 +540,7 @@ async function updateVenue(req, res) {
       venue: updatedVenue[0],
     });
   } catch (error) {
-    console.error("Error updating venue:", error);
+    /* log removed */
     res
       .status(500)
       .json({ error: "Internal server error", details: error.message });
@@ -615,7 +583,7 @@ async function deleteVenue(req, res) {
       message: "Venue deleted successfully",
     });
   } catch (error) {
-    console.error("Error deleting venue:", error);
+    /* log removed */
     res
       .status(500)
       .json({ error: "Internal server error", details: error.message });
@@ -687,7 +655,7 @@ async function getVenueOwnerById(req, res) {
       },
     });
   } catch (error) {
-    console.error("Error getting venue owner:", error);
+    /* log removed */
     res
       .status(500)
       .json({ error: "Internal server error", details: error.message });
@@ -723,7 +691,7 @@ async function getVenueOwnerIdByVenueId(req, res) {
 
     res.status(200).json({ venue_owner_ID: results[0].venue_owner_ID });
   } catch (error) {
-    console.error("Error getting venue owner ID:", error);
+    /* log removed */
     res
       .status(500)
       .json({ error: "Internal server error", details: error.message });
@@ -796,7 +764,7 @@ async function searchVenueOwnerByName(req, res) {
       },
     });
   } catch (error) {
-    console.error("Error searching venue owner by name:", error);
+    /* log removed */
     res
       .status(500)
       .json({ error: "Internal server error", details: error.message });
@@ -860,7 +828,7 @@ async function reserveVenue(req, res) {
       venue: updatedVenue[0],
     });
   } catch (error) {
-    console.error("Error reserving venue:", error);
+    /* log removed */
     res
       .status(500)
       .json({ error: "Internal server error", details: error.message });
@@ -876,15 +844,15 @@ async function getVenueOwnerDashboardStats(req, res) {
   let connection;
   try {
     // Get user info from the authenticated token
-    console.log("User from token:", req.user);
+    /* log removed */
     const userId = req.user.userId;
-    console.log("User ID:", userId);
+    /* log removed */
 
     // Establish database connection
     connection = await getConnection();
 
     // Log the SQL query we're about to execute
-    console.log("Executing venue query with user ID:", userId);
+    /* log removed */
 
     // Get all venues for the user directly (same as in getUserVenues)
     const [venuesResult] = await connection.query(
@@ -892,7 +860,7 @@ async function getVenueOwnerDashboardStats(req, res) {
       [userId]
     );
 
-    console.log("Venues result count:", venuesResult.length);
+    /* log removed */
 
     if (venuesResult.length === 0) {
       return res.json({
@@ -911,7 +879,7 @@ async function getVenueOwnerDashboardStats(req, res) {
 
     // Extract venue IDs
     const venueIds = venuesResult.map((venue) => venue.venue_ID);
-    console.log("Venue IDs:", venueIds);
+    /* log removed */
 
     // Get total earnings from paid reservations
     let earningsQuery,
@@ -1086,7 +1054,7 @@ async function getVenueOwnerDashboardStats(req, res) {
       },
     });
   } catch (error) {
-    console.error("Error getting venue owner stats:", error);
+    /* log removed */
     res
       .status(500)
       .json({ error: "Internal server error", details: error.message });
@@ -1211,13 +1179,13 @@ async function getVenueDetails(req, res) {
         venue.availability = "";
       }
     } catch (parseError) {
-      console.error("Error parsing JSON fields:", parseError);
+      /* log removed */
       // Continue with the original data if parsing fails
     }
 
     res.status(200).json(venue);
   } catch (error) {
-    console.error("Error fetching venue details:", error);
+    /* log removed */
     res
       .status(500)
       .json({ error: "Internal server error", details: error.message });
@@ -1361,7 +1329,7 @@ async function updateVenue(req, res) {
       venueId: venueId,
     });
   } catch (error) {
-    console.error("Error updating venue:", error);
+    /* log removed */
     res
       .status(500)
       .json({ error: "Internal server error", details: error.message });

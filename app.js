@@ -57,8 +57,8 @@ if (!fs.existsSync(logosDir)) {
 }
 
 // Log the static file paths
-console.log("Serving static files from:", path.join(__dirname, "uploads"));
-console.log("Logos directory:", logosDir);
+/* log removed */
+/* log removed */
 
 // Health Check Route
 app.get("/api/health", (req, res) => {
@@ -114,7 +114,7 @@ app.get("/api/dashboard", authenticateToken, async (req, res) => {
       message: `Welcome, ${results[0].name || results[0].email}!`,
     });
   } catch (error) {
-    console.error("Dashboard error:", error);
+    /* log removed */
     res.status(500).json({ error: "Internal server error" });
   } finally {
     if (connection) {
@@ -141,7 +141,7 @@ app.get("/api/test-db", async (req, res) => {
     conn.release();
     res.json({ success: true, result: rows[0].result });
   } catch (err) {
-    console.error("DB Test Error:", err);
+    /* log removed */
     res.status(500).json({ success: false, error: err.message });
   }
 });
@@ -153,11 +153,11 @@ app.use((req, res) => {
 
 // Global Error Handler
 app.use((err, req, res, next) => {
-  console.error("Unhandled error:", err);
+  /* log removed */
   res.status(500).json({ error: "Internal server error" });
 });
 
 const PORT = process.env.PORT || 3008;
 app.listen(PORT, () => {
-  console.log(`Server is running on port ${PORT}`);
+  /* log removed */
 });
